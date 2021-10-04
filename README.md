@@ -1,13 +1,12 @@
 # QRS-Detector
-Détection de QRS Complex
+QRS complex detector 
+This graphical interface allows to determine the Q,R,S parameters of an ECG signal.
+The button "Load ECG" allows to load our electrocardiogram.
+The "Detection" button will first filter the signal using the Pan-Tompkins algorithm.
 
-Cette interface graphique permet de déterminer les paramètres Q,R,S d'un ECG.
-Le bouton "Charger L'ECG" permet de charger notre électrocardiogramme.
-Le bouton "Détection" va tout d'abord filtrer le signal grâce à l'algorithme de Pan-Tompkins.
+Once this is done, the Q, R, S points of the signal will be detected. From them, the program will calculate the average heartbeat per minute and make a diagnosis:
+ - If the beat is higher than 100, it is a case of Tachycardia
+ - If the beat is lower than 60, we are in front of a Bradycardia
+ - Otherwise, the beat is normal.
 
-Une fois cela fois, les points Q, R,S du signal seront détectés. A partir d'eux, le programme va calcul le battement cardiaque moyen par minute et effectuer un diagnostique :
- - Si le battement est supérieur à 100, on est en face d'un cas de Tachycardie
- - Si le battement est inférieur à 60, on est en face d'une Bradycardie
- - Dans le cas contraire, le battement est normal.
-
-Le programme est partiellement inspiré de celui-ci: https://ww2.mathworks.cn/matlabcentral/fileexchange/45840-complete-pan-tompkins-implementation-ecg-qrs-detector
+The program is partially inspired by this one: https://ww2.mathworks.cn/matlabcentral/fileexchange/45840-complete-pan-tompkins-implementation-ecg-qrs-detector
