@@ -20,7 +20,7 @@ class ApplicationWindow(QMainWindow):
 		self.ui.setupUi(self)
 
 	 
-		###################################### Connection aux Events ######################################
+		###################################### Connection to the  Events ##################################
 		self.ui.UpdatePlot.clicked.connect(self.graph_control_update_plot)
 		self.ui.LoadData.clicked.connect(self.load_data_plot)
 
@@ -29,7 +29,7 @@ class ApplicationWindow(QMainWindow):
 		###################################################################################################
 
 
-		################################### Paramètres de Visualisation  ###################################
+		################################### Display paramters ###################################
 		self.ui.ecg_before.setBackground(background="w")
 		self.ui.ecg_before.setMenuEnabled(True)
 		self.ui.ecg_before.setMouseEnabled(x=True, y=True)
@@ -48,7 +48,7 @@ class ApplicationWindow(QMainWindow):
 	def load_data(self):
 		options = QFileDialog.Options()
 		options |= QFileDialog.DontUseNativeDialog
-		fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "","Fichiers .csv (*.csv);;Python Files (*.py)", options=options)
+		fileName, _ = QFileDialog.getOpenFileName(self,"QFileDialog.getOpenFileName()", "",".csv (*.csv);;Python Files (*.py)", options=options)
 		if fileName:
 			return fileName
 	
@@ -56,40 +56,40 @@ class ApplicationWindow(QMainWindow):
 	@pyqtSlot(name="load_data_plot")
 	def load_data_plot(self):
 		
-		#####┌ Récupération du chemin du fichier data #####
+		################# Get data path #################
 		file_Name = self.load_data()
-		###################################################
+		#################################################
 
-		###### Lecture de la data #####
+		########### Read data ##########
 		res=pd.read_csv(file_Name)
-		###############################
+		################################
 		
-		############ Nombre d'échantillons ############
+		############ Samples numbers ############
 		global input_max
 		################################################
 
-		############ Conversion en matrice ############
+		############ Convert into a matrix ############
 		matrix = res.to_numpy()
 		data = matrix[0:1500,1]
 		###############################################
-		global x #Signal d'entrée
-		############ Conversion en Float ############
+		global x # Input signal
+		############ Convert into a float ###########
 		x = data[:]
 		x = x.astype("float")
 		#############################################
 
-		############ Normalisation des données ############
+		############ Data normalization ############
 		x = (x - np.mean(x)) / np.std(x) 
 		###################################################
 		input_max=max(x)
-		######################## Visualisation ########################
+		######################## Visualization ########################
 		if_pen = pg.mkPen(color='b', width=3)
 		self.ui.ecg_before.clear()
 		self.ui.ecg_after.clear()
 		self.ui.ecg_before.plot(x[0:3000], pen=if_pen)
-		self.ui.ecg_before.setLabel('bottom', "Temps(s)")
+		self.ui.ecg_before.setLabel('bottom', "Time(s)")
 		self.ui.ecg_before.setLabel('left', "Amplitude (mV)")
-		self.ui.ecg_before.setTitle("ECG Brutes") 
+		self.ui.ecg_before.setTitle("ECG raw data ") 
 		self.ui.ecg_before.show()
 		self.ui.UpdatePlot.setEnabled(True)
 		################################################################
@@ -101,46 +101,46 @@ class ApplicationWindow(QMainWindow):
 
 		self.ui.LoadData.setEnabled(False)
 		self.ui.ecg_after.clear()
-		self.ui.ecg_after.setLabel('bottom', "Temps(s)")
+		self.ui.ecg_after.setLabel('bottom', "Time (s)")
 		self.ui.ecg_after.setLabel('left', "Amplitude (mV)")
-		self.ui.ecg_after.setTitle("ECG Filtrés")
+		self.ui.ecg_after.setTitle("Filtered ECG")
 		if_pen = pg.mkPen(color='g', width=3)
 		
-		###################################### Paramètres ######################################
+		###################################### Parameters ######################################
 
-		global F # Fréquence d'échantillonnage
-		global N # Largeur du QRS
+		global F # Sampling Frequency
+		global N # QRS Width
 
-		F= self.ui.F_ech.value() # Récupération de la Fréquence d'échantillonnage
-		N= self.ui.qrs_width.value() # Récupération de Largeur du QRS
+		F= self.ui.F_ech.value() # Get sampling fresuency value
+		N= self.ui.qrs_width.value() # Get QRS width
 
 		##########################################################################################
 		
 		####################################################################################################################
-		################################################ Filtre passe-bande ################################################
+		################################################ Bandpass filter ###################################################
 		####################################################################################################################
 		
-		################### Filtrage passe-bas ###################
+		################### Low-pass filter #####################
 		x1 = sig.lfilter([1,0,0,0,0,0,-2,0,0,0,0,0,1],[1,-2,1],x)
 		##########################################################
 
-		###################################### Filtrage passe-haut ######################################
+		###################################### Highpass filter ##########################################
 		x2 = sig.lfilter([1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[1,1],x1)
 		#################################################################################################
 
 		####################################################################################################################
 		
-		###################################### Filtrage dérivatif ######################################
+		###################################### Derivative filter ######################################
 		x3 = np.zeros(x.shape)
 		for i in range(2,len(x2)-2):
 			x3[i] = (-1*x2[i-2] -2*x2[i-1] + 2*x2[i+1] + x2[i+2])/(8*F)
 		################################################################################################
 
-		################### Signal carré ###################
+		################### Square signal ###################
 		x4 = x3*x3
 		#####################################################
 
-		################### Signal final ###################
+		################### Final signal ###################
 		y = np.zeros(x.shape)
 		for i in range(N,len(x4)-N):
 			for j in range(N):
@@ -148,12 +148,12 @@ class ApplicationWindow(QMainWindow):
 		y = y/N
 		#####################################################
 
-		######################## Calcul des pics R ########################
+		######################## R points computation ########################
 		r_peaks,_=sig.find_peaks(y,height=max(y)*0.70,distance=1)
 		r_peaks_values=[y[i] for i in r_peaks]
 		###################################################################
 		
-		######################### Calcul des points S ######################### 
+		######################### S points computation ######################### 
 		num_peak=r_peaks.shape[0]
 		s_points=list()
 		for index in range(num_peak):
@@ -169,7 +169,7 @@ class ApplicationWindow(QMainWindow):
 		s_points_values=[y[i] for i in s_points]
 		##########################################################################
 		
-		######################### Calcul des points Q ######################### 		
+		######################### Q points computation ######################### 		
 		q_points=list()
 		for index in range(num_peak):
 			i=r_peaks[index]
@@ -184,7 +184,7 @@ class ApplicationWindow(QMainWindow):
 		q_points_values=[y[i] for i in q_points]	  
 		##########################################################################
 
-		############ Calcul du battement cardiaque moyen et classification ############ 
+		############ Average heart rate and classification ############ 
 		diff=[]
 		for j in range(len(r_peaks)-1):
 			diff.append(r_peaks[j+1]-r_peaks[j])
@@ -193,20 +193,20 @@ class ApplicationWindow(QMainWindow):
 		bpm = (60000 / (2*heartrate_avg)) 
 		self.ui.heartrate.setText(str(round(bpm)))
 		if (bpm>100):
-			self.ui.result.setText("Condition Cardiaque : Tachycardie")
+			self.ui.result.setText("Heart condition : Tachycardy")
 		elif(bpm<60):
-			self.ui.result.setText("Condition Cardiaque : Bradycardie")
+			self.ui.result.setText("Heart condition : Bradycardy")
 		else:
-			self.ui.result.setText ("Condition Cardiaque : Normale")    
+			self.ui.result.setText ("Heart condition : Normal")    
 		################################################################################
 		 
-		######################### Visualisation des résultats #########################
+		################################################## Display results ##################################################
 		self.ui.ecg_after.plot(y,pen=if_pen)
 		self.ui.ecg_after.plot(r_peaks,r_peaks_values, pen=None,symbol='o',symbolBrush= pg.mkBrush(255,0,0),name='Q Peaks') 
 		self.ui.ecg_after.plot(s_points,s_points_values,pen=None,symbol='o',symbolBrush= pg.mkBrush(0,0,255),name='S Points')
 		self.ui.ecg_after.plot(q_points,q_points_values,pen=None,symbol='o',symbolBrush= pg.mkBrush(255,255,0),name='R Points')
 		self.ui.ecg_after.show()
-		################################################################################
+		#######################################################################################################################
 		self.ui.LoadData.setEnabled(True)
 	#############################################
 
